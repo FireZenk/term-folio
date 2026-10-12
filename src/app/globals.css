@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+:root {
+  --term-bg: #0d1117;
+  --term-fg: #c9d1d9;
+  --term-accent: #3fb950;
+  --term-muted: #6e7681;
+}
+
+@theme inline {
+  --color-term-bg: var(--term-bg);
+  --color-term-fg: var(--term-fg);
+  --color-term-accent: var(--term-accent);
+  --color-term-muted: var(--term-muted);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--term-bg);
+  color: var(--term-fg);
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.cursor {
+  display: inline-block;
+  width: 0.6ch;
+  height: 1.1em;
+  vertical-align: text-bottom;
+  background: var(--term-accent);
+  animation: blink 1s step-end infinite;
+}
