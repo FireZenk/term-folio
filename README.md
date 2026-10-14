@@ -7,7 +7,7 @@ command history, tab completion, themes and all.
 
 ## Features
 
-- [ ] Terminal shell UI (prompt, input, scrollback)
+- [x] Terminal shell UI (prompt, input, scrollback)
 - [ ] Commands: `help`, `about`, `whoami`, `projects`, `skills`, `contact`, `clear`
 - [ ] Tab autocomplete and ↑/↓ history navigation
 - [ ] `theme` command — dracula, matrix, gruvbox, solarized
