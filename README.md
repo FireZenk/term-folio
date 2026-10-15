@@ -8,7 +8,8 @@ command history, tab completion, themes and all.
 ## Features
 
 - [x] Terminal shell UI (prompt, input, scrollback)
-- [ ] Commands: `help`, `about`, `whoami`, `projects`, `skills`, `contact`, `clear`
+- [x] Command registry: `help`, `about`, `whoami`, `clear`
+- [ ] Commands: `projects`, `skills`, `contact`
 - [ ] Tab autocomplete and ↑/↓ history navigation
 - [ ] `theme` command — dracula, matrix, gruvbox, solarized
 - [ ] Boot sequence with ASCII banner and typing effect

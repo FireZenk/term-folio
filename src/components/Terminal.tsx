@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { HOST, USER, execute, type Line, type Tone } from "@/lib/commands";
 
-type Entry = { id: number; command: string; output: string[] };
+type Entry = { id: number; command: string; output: Line[] };
 
-const USER = "guest";
-const HOST = "firezenk";
+const toneClass: Record<Tone, string> = {
+  fg: "text-term-fg",
+  accent: "text-term-accent",
+  muted: "text-term-muted",
+  error: "text-term-error",
+};
 
 function Prompt() {
   return (
@@ -33,8 +38,9 @@ export default function Terminal() {
 
   function submit() {
     const command = input.trim();
-    const output = command ? [`command not found: ${command.split(/\s+/)[0]}`] : [];
-    setEntries((prev) => [...prev, { id: nextId.current++, command, output }]);
+    const result = execute(command);
+    const entry = { id: nextId.current++, command, output: result.lines };
+    setEntries((prev) => (result.clear ? [] : [...prev, entry]));
     setInput("");
     setCaret(0);
   }
@@ -58,7 +64,9 @@ export default function Terminal() {
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 leading-relaxed" role="log" aria-live="polite">
-        <p className="text-term-muted">term-folio v0.1.0 — commands coming soon.</p>
+        <p className="text-term-muted">
+          term-folio v0.1.0 — type <span className="text-term-accent">help</span> to get started.
+        </p>
 
         {entries.map((entry) => (
           <div key={entry.id}>
@@ -67,8 +75,8 @@ export default function Terminal() {
               {entry.command}
             </p>
             {entry.output.map((line, i) => (
-              <p key={i} className="whitespace-pre-wrap text-term-muted">
-                {line}
+              <p key={i} className={`whitespace-pre-wrap ${toneClass[line.tone ?? "fg"]}`}>
+                {line.text || "\u00a0"}
               </p>
             ))}
           </div>

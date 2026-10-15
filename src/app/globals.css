@@ -5,6 +5,7 @@
   --term-fg: #c9d1d9;
   --term-accent: #3fb950;
   --term-muted: #6e7681;
+  --term-error: #f85149;
 }
 
 @theme inline {
@@ -12,6 +13,7 @@
   --color-term-fg: var(--term-fg);
   --color-term-accent: var(--term-accent);
   --color-term-muted: var(--term-muted);
+  --color-term-error: var(--term-error);
   --font-mono: var(--font-mono);
 }
 
