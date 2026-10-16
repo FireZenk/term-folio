@@ -1,6 +1,8 @@
+import { contacts, projects, skillGroups } from "@/lib/profile";
+
 export type Tone = "fg" | "accent" | "muted" | "error";
 
-export type Line = { text: string; tone?: Tone };
+export type Line = { text: string; tone?: Tone; href?: string };
 
 export type CommandResult = { lines: Line[]; clear?: boolean };
 
@@ -14,6 +16,8 @@ export const USER = "guest";
 export const HOST = "firezenk";
 
 const line = (text: string, tone?: Tone): Line => ({ text, tone });
+
+const link = (text: string, href: string): Line => ({ text, tone: "accent", href });
 
 const help: Command = {
   name: "help",
@@ -53,13 +57,67 @@ const whoami: Command = {
   run: () => ({ lines: [line(USER)] }),
 };
 
+const projectsCmd: Command = {
+  name: "projects",
+  summary: "things I've built",
+  run: () => ({
+    lines: [
+      line(`Projects (${projects.length})`, "accent"),
+      ...projects.flatMap((p) => [
+        line(""),
+        line(`▸ ${p.name}`, "accent"),
+        line(`  ${p.pitch}`),
+        line(`  ${p.stack.join(" · ")}`, "muted"),
+        link(`  repo  ${p.repo.replace("https://", "")}`, p.repo),
+        ...(p.demo ? [link(`  demo  ${p.demo.replace("https://", "")}`, p.demo)] : []),
+      ]),
+      line(""),
+      line("More on the way — this list grows as I ship.", "muted"),
+    ],
+  }),
+};
+
+const skills: Command = {
+  name: "skills",
+  summary: "languages, frameworks and tools",
+  run: () => {
+    const width = Math.max(...skillGroups.flatMap((g) => g.skills.map((s) => s.name.length))) + 2;
+    return {
+      lines: skillGroups.flatMap((group, i) => [
+        ...(i > 0 ? [line("")] : []),
+        line(group.title, "accent"),
+        ...group.skills.map((s) =>
+          line(`  ${s.name.padEnd(width)}${"■".repeat(s.level)}${"□".repeat(5 - s.level)}`),
+        ),
+      ]),
+    };
+  },
+};
+
+const contact: Command = {
+  name: "contact",
+  summary: "where to find me",
+  run: () => {
+    const width = Math.max(...contacts.map((c) => c.label.length)) + 2;
+    return {
+      lines: [
+        line("Get in touch", "accent"),
+        line(""),
+        ...contacts.map((c) => link(`  ${c.label.padEnd(width)}${c.value}`, c.href)),
+        line(""),
+        line("Links open in a new tab.", "muted"),
+      ],
+    };
+  },
+};
+
 const clear: Command = {
   name: "clear",
   summary: "clear the screen",
   run: () => ({ lines: [], clear: true }),
 };
 
-export const commands: Command[] = [help, about, whoami, clear];
+export const commands: Command[] = [help, about, projectsCmd, skills, contact, whoami, clear];
 
 const registry = new Map(commands.map((c) => [c.name, c]));
 

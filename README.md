@@ -9,7 +9,7 @@ command history, tab completion, themes and all.
 
 - [x] Terminal shell UI (prompt, input, scrollback)
 - [x] Command registry: `help`, `about`, `whoami`, `clear`
-- [ ] Commands: `projects`, `skills`, `contact`
+- [x] Commands: `projects`, `skills`, `contact` (with clickable links)
 - [ ] Tab autocomplete and ↑/↓ history navigation
 - [ ] `theme` command — dracula, matrix, gruvbox, solarized
 - [ ] Boot sequence with ASCII banner and typing effect

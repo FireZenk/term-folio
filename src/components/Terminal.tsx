@@ -76,7 +76,18 @@ export default function Terminal() {
             </p>
             {entry.output.map((line, i) => (
               <p key={i} className={`whitespace-pre-wrap ${toneClass[line.tone ?? "fg"]}`}>
-                {line.text || "\u00a0"}
+                {line.href ? (
+                  <a
+                    href={line.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none"
+                  >
+                    {line.text}
+                  </a>
+                ) : (
+                  line.text || "\u00a0"
+                )}
               </p>
             ))}
           </div>
