@@ -30,7 +30,7 @@ const help: Command = {
         line(""),
         ...commands.map((c) => line(`  ${c.name.padEnd(width)}${c.summary}`)),
         line(""),
-        line("Tip: commands are case-insensitive.", "muted"),
+        line("Tip: Tab completes, ↑/↓ browse history, commands are case-insensitive.", "muted"),
       ],
     };
   },
@@ -135,4 +135,29 @@ export function execute(input: string): CommandResult {
     };
   }
   return command.run(args);
+}
+
+export type Completion = { value: string; candidates: string[] };
+
+/**
+ * Shell-style completion for the command name: a single match is completed in
+ * full, several matches are extended to their longest common prefix and, when
+ * that adds nothing, returned as candidates to list.
+ */
+export function complete(input: string): Completion {
+  const none = { value: input, candidates: [] };
+  if (/\s/.test(input.trimStart())) return none;
+
+  const prefix = input.trimStart().toLowerCase();
+  const matches = commands.map((c) => c.name).filter((n) => n.startsWith(prefix));
+  if (matches.length === 0) return none;
+  if (matches.length === 1) return { value: `${matches[0]} `, candidates: [] };
+
+  let common = matches[0];
+  for (const m of matches) {
+    while (!m.startsWith(common)) common = common.slice(0, -1);
+  }
+  return common.length > prefix.length
+    ? { value: common, candidates: [] }
+    : { value: input, candidates: matches };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { HOST, USER, execute, type Line, type Tone } from "@/lib/commands";
+import { HOST, USER, complete, execute, type Line, type Tone } from "@/lib/commands";
 
 type Entry = { id: number; command: string; output: Line[] };
 
@@ -30,6 +30,10 @@ export default function Terminal() {
   const inputRef = useRef<HTMLInputElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const nextId = useRef(0);
+  const history = useRef<string[]>([]);
+  // Position while browsing history; equals history length when on the draft.
+  const cursor = useRef(0);
+  const draft = useRef("");
 
   // Keep the latest line in view as scrollback grows.
   useEffect(() => {
@@ -41,8 +45,55 @@ export default function Terminal() {
     const result = execute(command);
     const entry = { id: nextId.current++, command, output: result.lines };
     setEntries((prev) => (result.clear ? [] : [...prev, entry]));
+    if (command && history.current.at(-1) !== command) history.current.push(command);
+    cursor.current = history.current.length;
+    draft.current = "";
     setInput("");
     setCaret(0);
+  }
+
+  // Replace the input programmatically and park the caret at the end.
+  function fill(value: string) {
+    setInput(value);
+    setCaret(value.length);
+    requestAnimationFrame(() => inputRef.current?.setSelectionRange(value.length, value.length));
+  }
+
+  function browse(step: -1 | 1) {
+    const next = cursor.current + step;
+    if (next < 0 || next > history.current.length) return;
+    if (cursor.current === history.current.length) draft.current = input;
+    cursor.current = next;
+    fill(history.current[next] ?? draft.current);
+  }
+
+  function tab() {
+    const { value, candidates } = complete(input);
+    if (candidates.length > 0) {
+      const entry = { id: nextId.current++, command: input, output: [{ text: candidates.join("  ") }] };
+      setEntries((prev) => [...prev, entry]);
+    }
+    fill(value);
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    switch (e.key) {
+      case "Enter":
+        submit();
+        break;
+      case "Tab":
+        e.preventDefault();
+        tab();
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        browse(-1);
+        break;
+      case "ArrowDown":
+        e.preventDefault();
+        browse(1);
+        break;
+    }
   }
 
   function syncCaret() {
@@ -112,9 +163,7 @@ export default function Terminal() {
               setCaret(e.target.selectionStart ?? e.target.value.length);
             }}
             onSelect={syncCaret}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") submit();
-            }}
+            onKeyDown={onKeyDown}
           />
         </label>
         <div ref={bottomRef} />
