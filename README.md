@@ -11,7 +11,7 @@ command history, tab completion, themes and all.
 - [x] Command registry: `help`, `about`, `whoami`, `clear`
 - [x] Commands: `projects`, `skills`, `contact` (with clickable links)
 - [x] Tab autocomplete and ↑/↓ history navigation
-- [ ] `theme` command — dracula, matrix, gruvbox, solarized
+- [x] `theme` command — dracula, matrix, gruvbox, solarized (remembered across visits)
 - [ ] Boot sequence with ASCII banner and typing effect
 - [ ] Live deployment on Vercel
 

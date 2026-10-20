@@ -1,14 +1,17 @@
 import { contacts, projects, skillGroups } from "@/lib/profile";
+import { DEFAULT_THEME, currentTheme, isTheme, themes } from "@/lib/themes";
 
 export type Tone = "fg" | "accent" | "muted" | "error";
 
 export type Line = { text: string; tone?: Tone; href?: string };
 
-export type CommandResult = { lines: Line[]; clear?: boolean };
+export type CommandResult = { lines: Line[]; clear?: boolean; theme?: string };
 
 export type Command = {
   name: string;
   summary: string;
+  /** Values offered by Tab completion for the first argument. */
+  args?: string[];
   run: (args: string[]) => CommandResult;
 };
 
@@ -111,13 +114,50 @@ const contact: Command = {
   },
 };
 
+const theme: Command = {
+  name: "theme",
+  summary: "switch color scheme",
+  args: themes.map((t) => t.name),
+  run: ([arg]) => {
+    if (!arg) {
+      const active = currentTheme();
+      const width = Math.max(...themes.map((t) => t.name.length)) + 4;
+      return {
+        lines: [
+          line("Themes", "accent"),
+          line(""),
+          ...themes.map((t) =>
+            t.name === active
+              ? line(`● ${t.name.padEnd(width)}${t.description}`, "accent")
+              : line(`  ${t.name.padEnd(width)}${t.description}`),
+          ),
+          line(""),
+          line("Usage: theme <name>  (your choice is remembered)", "muted"),
+        ],
+      };
+    }
+
+    const name = arg.toLowerCase();
+    if (!isTheme(name)) {
+      return {
+        lines: [
+          line(`theme: unknown theme '${arg}'`, "error"),
+          line(`Try one of: ${themes.map((t) => t.name).join(", ")}`, "muted"),
+        ],
+      };
+    }
+    const suffix = name === DEFAULT_THEME ? " — back to basics." : ".";
+    return { lines: [line(`Theme set to ${name}${suffix}`, "accent")], theme: name };
+  },
+};
+
 const clear: Command = {
   name: "clear",
   summary: "clear the screen",
   run: () => ({ lines: [], clear: true }),
 };
 
-export const commands: Command[] = [help, about, projectsCmd, skills, contact, whoami, clear];
+export const commands: Command[] = [help, about, projectsCmd, skills, contact, theme, whoami, clear];
 
 const registry = new Map(commands.map((c) => [c.name, c]));
 
@@ -140,24 +180,38 @@ export function execute(input: string): CommandResult {
 export type Completion = { value: string; candidates: string[] };
 
 /**
- * Shell-style completion for the command name: a single match is completed in
- * full, several matches are extended to their longest common prefix and, when
- * that adds nothing, returned as candidates to list.
+ * Shell-style completion for the command name and, for commands that declare
+ * them, its first argument: a single match is completed in full, several
+ * matches are extended to their longest common prefix and, when that adds
+ * nothing, returned as candidates to list.
  */
 export function complete(input: string): Completion {
   const none = { value: input, candidates: [] };
-  if (/\s/.test(input.trimStart())) return none;
+  const text = input.trimStart();
+  const words = text.split(/\s+/);
 
-  const prefix = input.trimStart().toLowerCase();
-  const matches = commands.map((c) => c.name).filter((n) => n.startsWith(prefix));
-  if (matches.length === 0) return none;
-  if (matches.length === 1) return { value: `${matches[0]} `, candidates: [] };
+  if (words.length === 1) {
+    return completeWord(input, "", words[0], commands.map((c) => c.name));
+  }
+  if (words.length === 2) {
+    const options = registry.get(words[0].toLowerCase())?.args;
+    if (!options) return none;
+    return completeWord(input, `${words[0]} `, words[1], options);
+  }
+  return none;
+}
+
+function completeWord(input: string, head: string, word: string, options: string[]): Completion {
+  const prefix = word.toLowerCase();
+  const matches = options.filter((o) => o.startsWith(prefix));
+  if (matches.length === 0) return { value: input, candidates: [] };
+  if (matches.length === 1) return { value: `${head}${matches[0]} `, candidates: [] };
 
   let common = matches[0];
   for (const m of matches) {
     while (!m.startsWith(common)) common = common.slice(0, -1);
   }
   return common.length > prefix.length
-    ? { value: common, candidates: [] }
+    ? { value: `${head}${common}`, candidates: [] }
     : { value: input, candidates: matches };
 }

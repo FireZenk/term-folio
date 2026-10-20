@@ -8,6 +8,38 @@
   --term-error: #f85149;
 }
 
+[data-theme="dracula"] {
+  --term-bg: #282a36;
+  --term-fg: #f8f8f2;
+  --term-accent: #bd93f9;
+  --term-muted: #6272a4;
+  --term-error: #ff5555;
+}
+
+[data-theme="matrix"] {
+  --term-bg: #020b04;
+  --term-fg: #33ff66;
+  --term-accent: #b6ffc8;
+  --term-muted: #1f7a3a;
+  --term-error: #ff3b3b;
+}
+
+[data-theme="gruvbox"] {
+  --term-bg: #282828;
+  --term-fg: #ebdbb2;
+  --term-accent: #fabd2f;
+  --term-muted: #928374;
+  --term-error: #fb4934;
+}
+
+[data-theme="solarized"] {
+  --term-bg: #002b36;
+  --term-fg: #93a1a1;
+  --term-accent: #2aa198;
+  --term-muted: #586e75;
+  --term-error: #dc322f;
+}
+
 @theme inline {
   --color-term-bg: var(--term-bg);
   --color-term-fg: var(--term-fg);
@@ -21,6 +53,18 @@ body {
   background: var(--term-bg);
   color: var(--term-fg);
   font-family: var(--font-mono), ui-monospace, monospace;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--term-accent) 35%, transparent);
+}
+
+/* A faint phosphor glow sells the matrix look. */
+[data-theme="matrix"] body {
+  text-shadow: 0 0 6px color-mix(in srgb, var(--term-fg) 45%, transparent);
 }
 
 @keyframes blink {

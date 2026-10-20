@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
+import { themeBootScript } from "@/lib/themes";
 import "./globals.css";
 
 const mono = JetBrains_Mono({
@@ -14,7 +15,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${mono.variable} h-full antialiased`}>
+    // The boot script sets data-theme before hydration, hence the warning opt-out.
+    <html lang="en" className={`${mono.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

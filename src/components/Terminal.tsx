@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { HOST, USER, complete, execute, type Line, type Tone } from "@/lib/commands";
+import { applyTheme } from "@/lib/themes";
 
 type Entry = { id: number; command: string; output: Line[] };
 
@@ -45,6 +46,7 @@ export default function Terminal() {
     const result = execute(command);
     const entry = { id: nextId.current++, command, output: result.lines };
     setEntries((prev) => (result.clear ? [] : [...prev, entry]));
+    if (result.theme) applyTheme(result.theme);
     if (command && history.current.at(-1) !== command) history.current.push(command);
     cursor.current = history.current.length;
     draft.current = "";
