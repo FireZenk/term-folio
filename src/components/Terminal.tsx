@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { HOST, USER, complete, execute, type Line, type Tone } from "@/lib/commands";
 import { applyTheme } from "@/lib/themes";
+import { TYPE_SPEED, bootSteps, type BootStep } from "@/lib/boot";
 
 type Entry = { id: number; command: string; output: Line[] };
 
@@ -12,6 +13,43 @@ const toneClass: Record<Tone, string> = {
   muted: "text-term-muted",
   error: "text-term-error",
 };
+
+// Backtick-quoted words in boot text are highlighted like commands.
+function highlight(text: string) {
+  return text.split(/`([^`]+)`/).map((part, i) =>
+    i % 2 ? (
+      <span key={i} className="text-term-accent">
+        {part}
+      </span>
+    ) : (
+      part
+    ),
+  );
+}
+
+function BootLine({ step, chars }: { step: BootStep; chars?: number }) {
+  // Banner glyphs are drawn as 1ch cells: block characters fall back to fonts
+  // with other widths, which would skew the letters.
+  if (step.banner) {
+    return (
+      <p className={`flex text-[0.6rem] sm:text-sm ${toneClass[step.tone ?? "fg"]}`}>
+        {step.label && <span className="sr-only">{step.label}</span>}
+        {[...step.text].map((c, i) => (
+          <span key={i} aria-hidden className={`inline-block h-[1.2em] w-[1ch] ${c === " " ? "" : "bg-current shadow-[0_0_0_0.5px_currentColor]"}`} />
+        ))}
+      </p>
+    );
+  }
+
+  const text = chars === undefined ? step.text : step.text.slice(0, chars);
+  return (
+    <p className={`whitespace-pre-wrap ${toneClass[step.tone ?? "fg"]}`}>
+      {highlight(text)}
+      {chars !== undefined && <span className="cursor" aria-hidden />}
+      {!text && chars === undefined && "\u00a0"}
+    </p>
+  );
+}
 
 function Prompt() {
   return (
@@ -35,11 +73,45 @@ export default function Terminal() {
   // Position while browsing history; equals history length when on the draft.
   const cursor = useRef(0);
   const draft = useRef("");
+  // Boot progress: steps fully shown, and characters typed of the current one.
+  const [step, setStep] = useState(0);
+  const [chars, setChars] = useState(0);
+  const booting = step < bootSteps.length;
+
+  useEffect(() => {
+    if (!booting) return;
+    // Visitors who prefer reduced motion get the boot output straight away.
+    const instant = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const current = bootSteps[step];
+    const typing = current.typed && chars < current.text.length;
+    const timer = setTimeout(
+      () => {
+        if (instant) {
+          setStep(bootSteps.length);
+        } else if (typing) {
+          setChars((c) => c + 1);
+        } else {
+          setStep((s) => s + 1);
+          setChars(0);
+        }
+      },
+      instant ? 0 : typing ? TYPE_SPEED : current.pause,
+    );
+    return () => clearTimeout(timer);
+  }, [booting, step, chars]);
+
+  // Any key skips the boot sequence.
+  useEffect(() => {
+    if (!booting) return;
+    const skip = () => setStep(bootSteps.length);
+    window.addEventListener("keydown", skip);
+    return () => window.removeEventListener("keydown", skip);
+  }, [booting]);
 
   // Keep the latest line in view as scrollback grows.
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
-  }, [entries]);
+  }, [entries, step]);
 
   function submit() {
     const command = input.trim();
@@ -105,7 +177,7 @@ export default function Terminal() {
   return (
     <section
       className="flex flex-1 flex-col overflow-hidden rounded-lg border border-term-muted/30 shadow-2xl shadow-black/50"
-      onClick={() => inputRef.current?.focus()}
+      onClick={() => (booting ? setStep(bootSteps.length) : inputRef.current?.focus())}
     >
       <header className="flex items-center gap-2 border-b border-term-muted/30 bg-black/30 px-4 py-2">
         <span className="h-3 w-3 rounded-full bg-[#ff5f56]" />
@@ -117,9 +189,15 @@ export default function Terminal() {
       </header>
 
       <div className="flex-1 overflow-y-auto p-4 leading-relaxed" role="log" aria-live="polite">
-        <p className="text-term-muted">
-          term-folio v0.1.0 — type <span className="text-term-accent">help</span> to get started.
-        </p>
+        {bootSteps.slice(0, step).map((s, i) => (
+          <BootLine key={i} step={s} />
+        ))}
+        {booting && <BootLine step={bootSteps[step]} chars={bootSteps[step].typed ? chars : undefined} />}
+        {booting ? (
+          <p className="mt-4 text-xs text-term-muted/70">press any key to skip</p>
+        ) : (
+          <p aria-hidden>{"\u00a0"}</p>
+        )}
 
         {entries.map((entry) => (
           <div key={entry.id}>
@@ -146,28 +224,30 @@ export default function Terminal() {
           </div>
         ))}
 
-        <label className="relative block whitespace-pre-wrap break-all">
-          <Prompt />
-          <span>{input.slice(0, caret)}</span>
-          <span className="cursor" aria-hidden />
-          <span>{input.slice(caret)}</span>
-          <input
-            ref={inputRef}
-            value={input}
-            autoFocus
-            spellCheck={false}
-            autoComplete="off"
-            autoCapitalize="off"
-            aria-label="Terminal input"
-            className="absolute inset-0 h-full w-full opacity-0"
-            onChange={(e) => {
-              setInput(e.target.value);
-              setCaret(e.target.selectionStart ?? e.target.value.length);
-            }}
-            onSelect={syncCaret}
-            onKeyDown={onKeyDown}
-          />
-        </label>
+        {!booting && (
+          <label className="relative block whitespace-pre-wrap break-all">
+            <Prompt />
+            <span>{input.slice(0, caret)}</span>
+            <span className="cursor" aria-hidden />
+            <span>{input.slice(caret)}</span>
+            <input
+              ref={inputRef}
+              value={input}
+              autoFocus
+              spellCheck={false}
+              autoComplete="off"
+              autoCapitalize="off"
+              aria-label="Terminal input"
+              className="absolute inset-0 h-full w-full opacity-0"
+              onChange={(e) => {
+                setInput(e.target.value);
+                setCaret(e.target.selectionStart ?? e.target.value.length);
+              }}
+              onSelect={syncCaret}
+              onKeyDown={onKeyDown}
+            />
+          </label>
+        )}
         <div ref={bottomRef} />
       </div>
     </section>

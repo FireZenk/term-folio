@@ -12,7 +12,7 @@ command history, tab completion, themes and all.
 - [x] Commands: `projects`, `skills`, `contact` (with clickable links)
 - [x] Tab autocomplete and ↑/↓ history navigation
 - [x] `theme` command — dracula, matrix, gruvbox, solarized (remembered across visits)
-- [ ] Boot sequence with ASCII banner and typing effect
+- [x] Boot sequence with ASCII banner and typing effect (any key skips; honors reduced motion)
 - [ ] Live deployment on Vercel
 
 ## Stack
