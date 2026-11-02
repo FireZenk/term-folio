@@ -17,7 +17,7 @@ export type BootStep = {
 
 export const TYPE_SPEED = 22;
 
-const BANNER = [
+export const BANNER = [
   "█████ █████ ████  █████ █████ █████ █   █ █  █",
   "█       █   █   █ █        █  █     ██  █ █ █",
   "████    █   ████  ████    █   ████  █ █ █ ██",

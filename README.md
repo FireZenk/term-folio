@@ -5,6 +5,8 @@
 An interactive, keyboard-first portfolio that looks and behaves like a shell —
 command history, tab completion, themes and all.
 
+![term-folio demo: boot sequence, help, projects, theme dracula and skills](docs/demo.gif)
+
 ## Features
 
 - [x] Terminal shell UI (prompt, input, scrollback)
@@ -13,6 +15,7 @@ command history, tab completion, themes and all.
 - [x] Tab autocomplete and ↑/↓ history navigation
 - [x] `theme` command — dracula, matrix, gruvbox, solarized (remembered across visits)
 - [x] Boot sequence with ASCII banner and typing effect (any key skips; honors reduced motion)
+- [x] Open Graph / Twitter card image generated at build time (`next/og`)
 - [ ] Live deployment on Vercel
 
 ## Stack
@@ -29,6 +32,18 @@ npm run dev
 ```
 
 Open http://localhost:3000.
+
+## Deploy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FFireZenk%2Fterm-folio)
+
+Zero config: import the repo on Vercel and it builds with `next build`.
+Absolute Open Graph URLs use `VERCEL_PROJECT_PRODUCTION_URL`, which Vercel sets
+automatically — no environment variables needed.
+
+The social preview lives in [`src/app/opengraph-image.tsx`](src/app/opengraph-image.tsx):
+
+![Open Graph preview](docs/og.png)
 
 ## License
 
